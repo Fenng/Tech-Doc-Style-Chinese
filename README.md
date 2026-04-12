@@ -88,7 +88,7 @@ Use $tech-doc-style-chinese to rewrite this Chinese technical copy.
 - 重写中文技术文案
 - 整理 FAQ
 - 优化 API 文档措辞
-- 收口 landing page 中文 copy
+- 优化落地页中文文案
 
 ## 如何做项目级覆盖
 
