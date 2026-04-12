@@ -128,6 +128,28 @@ Use $tech-doc-style-chinese to rewrite this Chinese technical copy.
 
 这样可以保持核心 Skill 可复用，同时允许项目自行扩展。
 
+## 轻量校验与 CI
+
+仓库内置了一个零依赖校验脚本，用于检查高频规则：
+
+- 引号：禁止可见正文出现 `"`、`“`、`”`
+- 称呼：禁止可见正文出现 `你`、`您`、`同学`
+- 术语大小写：检查 `id/http/url/json/api/ai` 等写法并提示归一
+
+本地执行：
+
+```bash
+python scripts/lint_copy_rules.py
+```
+
+仅检查指定文件或目录：
+
+```bash
+python scripts/lint_copy_rules.py SKILL.md NoCode-Skill.md references/
+```
+
+GitHub Actions 配置文件为 `.github/workflows/skill-lint.yml`，会在 `pull_request` 和 `main` 分支 `push` 时自动运行。
+
 ## 发布建议
 
 如果只是公开分享规范内容：
