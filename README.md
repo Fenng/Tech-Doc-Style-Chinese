@@ -120,9 +120,7 @@ Use $tech-doc-style-chinese to rewrite this Chinese technical copy.
 - 保留 `agents/openai.yaml`
 - 在仓库里明确目录结构和安装方式
 
-## 作者
-
-- Fenng（GitHub：[@Fenng](https://github.com/Fenng)）
+<!-- 作者：Fenng（GitHub：@Fenng） -->
 
 ## License
 
