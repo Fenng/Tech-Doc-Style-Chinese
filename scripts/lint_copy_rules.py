@@ -19,12 +19,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-DEFAULT_FILES = [
-    "SKILL.md",
-    "NoCode-Skill.md",
-    "README.md",
-    "references/Project-Overrides.md",
-]
+DEFAULT_TARGETS = ["."]
 
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 INLINE_CODE_RE = re.compile(r"`[^`]*`")
@@ -32,6 +27,7 @@ URL_RE = re.compile(r"https?://\S+")
 API_PATH_RE = re.compile(
     r"(?<![A-Za-z0-9_])/[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)+(?![A-Za-z0-9_])"
 )
+INLINE_LINK_RE = re.compile(r"(!?\[[^\]]*]\()([^)]+)(\))")
 
 FORBIDDEN_QUOTES = {
     '"': "ASCII 双引号",
@@ -39,7 +35,26 @@ FORBIDDEN_QUOTES = {
     "”": "中文弯引号",
 }
 
-FORBIDDEN_ADDRESS = ["你", "您", "同学"]
+NON_WORD_CHARS = r"\u4e00-\u9fffA-Za-z0-9_"
+PREFIX_CONTEXT_CHARS = "与跟对向给帮替为请让"
+SUFFIX_HINTS = "可会要能应需请把将来去做看读写用"
+
+FORBIDDEN_ADDRESS_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    # 「你」：独立词起始（前面不是中文/字母/数字）或在「与你」等上下文中。
+    (
+        re.compile(
+            rf"(?<![{NON_WORD_CHARS}])你(?=$|[^\u4e00-\u9fff]|[{SUFFIX_HINTS}])"
+        ),
+        "你",
+    ),
+    (re.compile(rf"(?<=[{PREFIX_CONTEXT_CHARS}])你"), "你"),
+    # 「您」基本不会作为其他词片段出现，直接命中。
+    (re.compile(r"您"), "您"),
+    # 「同学」按词组命中，覆盖「同学们」「欢迎同学」等常见称呼。
+    (re.compile(r"同学(?:们|們)?"), "同学"),
+]
+
+SKIP_DIR_NAMES = {".git"}
 
 CASE_RULES = [
     (re.compile(r"(?<![A-Za-z0-9_])id(?![A-Za-z0-9_])"), "ID"),
@@ -77,16 +92,38 @@ def mask_match(text: str, regex: re.Pattern[str]) -> str:
 def prepare_visible_line(line: str) -> str:
     visible = line
     visible = mask_match(visible, INLINE_CODE_RE)
+    visible = INLINE_LINK_RE.sub(
+        lambda m: f"{m.group(1)}{' ' * len(m.group(2))}{m.group(3)}", visible
+    )
     visible = mask_match(visible, URL_RE)
     visible = mask_match(visible, API_PATH_RE)
     return visible
 
 
+def iter_forbidden_address_matches(line: str):
+    seen: set[tuple[int, int, str]] = set()
+    for pattern, label in FORBIDDEN_ADDRESS_PATTERNS:
+        for match in pattern.finditer(line):
+            key = (match.start(), match.end(), label)
+            if key in seen:
+                continue
+            seen.add(key)
+            yield match, label
+
+
 def scan_markdown(path: Path) -> list[Violation]:
     violations: list[Violation] = []
     in_fence = False
+    lines = path.read_text(encoding="utf-8").splitlines()
+    in_front_matter = bool(lines and lines[0].strip() == "---")
 
-    for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+    for line_no, raw in enumerate(lines, start=1):
+        # Ignore YAML front matter block at file head.
+        if in_front_matter:
+            if line_no != 1 and raw.strip() in {"---", "..."}:
+                in_front_matter = False
+            continue
+
         if FENCE_RE.match(raw):
             in_fence = not in_fence
             continue
@@ -109,18 +146,17 @@ def scan_markdown(path: Path) -> list[Violation]:
                     )
                 )
 
-        for term in FORBIDDEN_ADDRESS:
-            for match in re.finditer(re.escape(term), visible):
-                violations.append(
-                    Violation(
-                        file=path,
-                        line=line_no,
-                        col=match.start() + 1,
-                        kind="address",
-                        message=f"可见正文包含禁用称呼「{term}」",
-                        snippet=raw.strip(),
-                    )
+        for match, term in iter_forbidden_address_matches(visible):
+            violations.append(
+                Violation(
+                    file=path,
+                    line=line_no,
+                    col=match.start() + 1,
+                    kind="address",
+                    message=f"可见正文包含禁用称呼「{term}」",
+                    snippet=raw.strip(),
                 )
+            )
 
         for pattern, suggested in CASE_RULES:
             for match in pattern.finditer(visible):
@@ -144,13 +180,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "files",
         nargs="*",
-        help="要检查的 Markdown 文件；为空时使用默认文件集合",
+        help="要检查的 Markdown 文件或目录；为空时默认检查当前目录下所有 Markdown 文件",
     )
     return parser.parse_args()
 
 
 def collect_targets(args: argparse.Namespace) -> list[Path]:
-    raw_targets = args.files if args.files else DEFAULT_FILES
+    raw_targets = args.files if args.files else DEFAULT_TARGETS
     targets: list[Path] = []
 
     for item in raw_targets:
@@ -159,7 +195,10 @@ def collect_targets(args: argparse.Namespace) -> list[Path]:
             print(f"[WARN] 文件不存在，已跳过: {item}", file=sys.stderr)
             continue
         if path.is_dir():
-            targets.extend(sorted(path.rglob("*.md")))
+            for markdown in sorted(path.rglob("*.md")):
+                if any(part in SKIP_DIR_NAMES for part in markdown.parts):
+                    continue
+                targets.append(markdown)
         else:
             targets.append(path)
 
