@@ -124,9 +124,5 @@ Use $tech-doc-style-chinese to rewrite this Chinese technical copy.
 
 ## License
 
-如果准备正式公开发布，有待补一个明确的开源许可证，例如：
-
-- MIT
-- Apache-2.0
-
-当前仓库如未附带许可证，默认不等于可自由复用。
+本项目采用 MIT License。  
+详见 [LICENSE](./LICENSE)。
