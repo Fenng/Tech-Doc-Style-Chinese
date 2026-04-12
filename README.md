@@ -68,13 +68,34 @@ tech-doc-style-chinese/
 
 ## 如何在 Codex 中使用
 
-如果要把它作为 Skill 安装到本地，可将整个目录放进 `$CODEX_HOME/skills/` 下。
+### 按 Release 安装（推荐）
 
-例如：
+固定版本安装，便于团队复现：
+
+```bash
+CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
+mkdir -p "$CODEX_HOME/skills"
+
+git clone --depth 1 --branch <release-tag> \
+  https://github.com/Fenng/tech-doc-style-chinese.git \
+  "$CODEX_HOME/skills/tech-doc-style-chinese"
+```
+
+`<release-tag>` 可替换为已发布版本，例如 `v0.1.0.2.4`。
+
+### 本地目录安装（开发场景）
+
+如果正在本地修改或调试，可直接复制目录：
 
 ```bash
 mkdir -p "$CODEX_HOME/skills/tech-doc-style-chinese"
 cp -R ./* "$CODEX_HOME/skills/tech-doc-style-chinese/"
+```
+
+安装后可快速校验：
+
+```bash
+test -f "$CODEX_HOME/skills/tech-doc-style-chinese/SKILL.md" && echo "installed"
 ```
 
 安装完成后，可在任务中显式调用：
