@@ -1,6 +1,6 @@
 # Chinese Tech Doc Style
 
-一份面向中文技术文档、产品文案与界面文案的写作 Skill。
+本项目只是一份面向中文技术文档、产品文案与界面文案的写作 Skill。
 
 这份 Skill 的目标很明确：让中文技术写作更克制、更准确、更易读。不追求宣传感，也不试图把所有内容都写成统一模板，而是聚焦几类高频问题：
 
@@ -119,6 +119,10 @@ Use $tech-doc-style-chinese to rewrite this Chinese technical copy.
 - 保留 `SKILL.md`
 - 保留 `agents/openai.yaml`
 - 在仓库里明确目录结构和安装方式
+
+## 作者
+
+- Fenng（GitHub：[@Fenng](https://github.com/Fenng)）
 
 ## License
 
