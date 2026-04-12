@@ -1,0 +1,4 @@
+interface:
+  display_name: "Chinese Tech Doc Style"
+  short_description: "Refine Chinese technical docs and product copy"
+  default_prompt: "Use $tech-doc-style-chinese to rewrite this Chinese technical copy into a concise, readable version."
