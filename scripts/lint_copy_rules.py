@@ -5,6 +5,8 @@
 1) 可见正文中不允许使用 ASCII 双引号和中文弯引号
 2) 可见正文中不允许使用「你 / 您 / 同学」
 3) 高频术语大小写归一（ID / HTTP / URL / JSON / API / AI）
+4) 指定缩写禁用（JS / Js / H5）
+5) AI 术语误写（LLM / AIGC / RAG / ChatGPT / OpenAI API 等）
 
 说明：
 - 这是轻量脚本，不做完整 Markdown 语法解析。
@@ -69,6 +71,30 @@ CASE_RULES = [
     (re.compile(r"(?<![A-Za-z0-9_])Api(?![A-Za-z0-9_])"), "API"),
     (re.compile(r"(?<![A-Za-z0-9_])ai(?![A-Za-z0-9_])"), "AI"),
     (re.compile(r"(?<![A-Za-z0-9_])Ai(?![A-Za-z0-9_])"), "AI"),
+]
+
+ABBREVIATION_RULES = [
+    (re.compile(r"(?<![A-Za-z0-9_])JS(?![A-Za-z0-9_])"), "JavaScript"),
+    (re.compile(r"(?<![A-Za-z0-9_])Js(?![A-Za-z0-9_])"), "JavaScript"),
+    (re.compile(r"(?<![A-Za-z0-9_])H5(?![A-Za-z0-9_])"), "HTML5"),
+]
+
+AI_TERM_RULES = [
+    (re.compile(r"(?<![A-Za-z0-9_])llm(?![A-Za-z0-9_])"), "LLM"),
+    (re.compile(r"(?<![A-Za-z0-9_])Llm(?![A-Za-z0-9_])"), "LLM"),
+    (re.compile(r"(?<![A-Za-z0-9_])aigc(?![A-Za-z0-9_])"), "AIGC"),
+    (re.compile(r"(?<![A-Za-z0-9_])Aigc(?![A-Za-z0-9_])"), "AIGC"),
+    (re.compile(r"(?<![A-Za-z0-9_])rag(?![A-Za-z0-9_])"), "RAG"),
+    (re.compile(r"(?<![A-Za-z0-9_])Rag(?![A-Za-z0-9_])"), "RAG"),
+    (re.compile(r"(?<![A-Za-z0-9_])chatgpt(?![A-Za-z0-9_])"), "ChatGPT"),
+    (re.compile(r"(?<![A-Za-z0-9_])Chatgpt(?![A-Za-z0-9_])"), "ChatGPT"),
+    (re.compile(r"(?<![A-Za-z0-9_])openai\\s+api(?![A-Za-z0-9_])"), "OpenAI API"),
+    (re.compile(r"(?<![A-Za-z0-9_])OpenAI\\s+api(?![A-Za-z0-9_])"), "OpenAI API"),
+    (re.compile(r"(?<![A-Za-z0-9_])embeding(?![A-Za-z0-9_])"), "embedding"),
+    (re.compile(r"(?<![A-Za-z0-9_])finetune(?![A-Za-z0-9_])"), "fine-tuning"),
+    (re.compile(r"(?<![A-Za-z0-9_])fine\\s+tune(?![A-Za-z0-9_])"), "fine-tuning"),
+    (re.compile(r"提示工程学"), "提示工程"),
+    (re.compile(r"幻听"), "幻觉"),
 ]
 
 
@@ -168,6 +194,34 @@ def scan_markdown(path: Path) -> list[Violation]:
                         col=match.start() + 1,
                         kind="casing",
                         message=f"术语「{wrong}」建议改为「{suggested}」",
+                        snippet=raw.strip(),
+                    )
+                )
+
+        for pattern, suggested in ABBREVIATION_RULES:
+            for match in pattern.finditer(visible):
+                wrong = match.group(0)
+                violations.append(
+                    Violation(
+                        file=path,
+                        line=line_no,
+                        col=match.start() + 1,
+                        kind="abbreviation",
+                        message=f"缩写「{wrong}」建议改为「{suggested}」",
+                        snippet=raw.strip(),
+                    )
+                )
+
+        for pattern, suggested in AI_TERM_RULES:
+            for match in pattern.finditer(visible):
+                wrong = match.group(0)
+                violations.append(
+                    Violation(
+                        file=path,
+                        line=line_no,
+                        col=match.start() + 1,
+                        kind="ai-term",
+                        message=f"AI 术语「{wrong}」建议改为「{suggested}」",
                         snippet=raw.strip(),
                     )
                 )
