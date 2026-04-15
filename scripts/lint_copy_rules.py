@@ -7,6 +7,7 @@
 3) 高频术语大小写归一（ID / HTTP / URL / JSON / API / AI）
 4) 指定缩写禁用（JS / Js / H5）
 5) AI 术语误写（LLM / AIGC / RAG / ChatGPT / OpenAI API 等）
+6) 中文高频错词（阀值 / 登陆 / 布署 / 配制 等）
 
 说明：
 - 这是轻量脚本，不做完整 Markdown 语法解析。
@@ -95,6 +96,29 @@ AI_TERM_RULES = [
     (re.compile(r"(?<![A-Za-z0-9_])fine\\s+tune(?![A-Za-z0-9_])"), "fine-tuning"),
     (re.compile(r"提示工程学"), "提示工程"),
     (re.compile(r"幻听"), "幻觉"),
+]
+
+TYPO_RULES = [
+    (re.compile(r"阀值"), "阈值"),
+    (re.compile(r"登陆"), "登录"),
+    (re.compile(r"布署"), "部署"),
+    (re.compile(r"配制"), "配置"),
+    (re.compile(r"起用"), "启用"),
+    (re.compile(r"反回"), "返回"),
+    (re.compile(r"回朔"), "回溯"),
+    (re.compile(r"标示"), "标识"),
+    (re.compile(r"帐户"), "账户"),
+    (re.compile(r"帐号"), "账号"),
+    (re.compile(r"截止"), "截至"),
+    (re.compile(r"搜寻"), "搜索"),
+    # 「即时」仅在技术语境下提示为「实时」，避免误报到通用语境。
+    (
+        re.compile(
+            r"即时(?=(通信|消息|处理|监控|更新|同步|计算|响应|数据|日志|推送|渲染|指标|告警|检索|查询|任务|分析|流式|调用|服务|接口|系统))"
+        ),
+        "实时",
+    ),
+    (re.compile(r"做为"), "作为"),
 ]
 
 
@@ -222,6 +246,20 @@ def scan_markdown(path: Path) -> list[Violation]:
                         col=match.start() + 1,
                         kind="ai-term",
                         message=f"AI 术语「{wrong}」建议改为「{suggested}」",
+                        snippet=raw.strip(),
+                    )
+                )
+
+        for pattern, suggested in TYPO_RULES:
+            for match in pattern.finditer(visible):
+                wrong = match.group(0)
+                violations.append(
+                    Violation(
+                        file=path,
+                        line=line_no,
+                        col=match.start() + 1,
+                        kind="typo",
+                        message=f"词语「{wrong}」建议改为「{suggested}」",
                         snippet=raw.strip(),
                     )
                 )

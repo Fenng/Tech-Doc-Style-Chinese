@@ -137,6 +137,7 @@ Use $tech-doc-style-chinese to rewrite this Chinese technical copy.
 - 术语大小写：检查 `id/http/url/json/api/ai` 等写法并提示归一
 - 指定缩写：检查 `JS` / `Js` / `H5` 并提示改为 `JavaScript` / `HTML5`
 - AI 术语：检查 `llm/aigc/rag/chatgpt/openai api/embeding/finetune/fine tune` 等误写
+- 中文错词：检查 `阀值/登陆/布署/配制/起用/反回/回朔/标示/帐户/帐号/截止/搜寻/即时/做为`
 
 本地执行：
 
