@@ -68,6 +68,29 @@ tech-doc-style-chinese/
 
 ## 如何在 Codex 中使用
 
+### 使用 npx 安装（推荐）
+
+如果本机有 Node.js 环境，可直接用 `npx skills` 安装：
+
+```bash
+# 直接安装
+npx skills add https://github.com/Fenng/tech-doc-style-chinese
+```
+
+如需无交互并明确安装到全局 Codex，可使用：
+
+```bash
+npx -y skills add https://github.com/Fenng/tech-doc-style-chinese -a codex -g
+```
+
+参数说明：
+
+- `-a codex` 表示安装到 Codex agent
+- `-g` 表示全局安装（用户级），不加则安装到当前项目范围
+- `-y` 表示跳过交互确认，便于自动化执行
+
+安装后建议重启 Codex，以确保新 Skill 被加载。
+
 ### 按 Release 安装（推荐）
 
 固定版本安装，便于团队复现：
