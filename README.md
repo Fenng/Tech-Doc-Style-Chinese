@@ -60,7 +60,7 @@ tech-doc-style-chinese/
 
 各文件的作用：
 
-- `SKILL.md`：正式技能入口，供 Codex 使用
+- `SKILL.md`：正式技能入口，供 Codex、Claude Code 等 Agent 使用
 - `NoCode-Skill.md`：对外说明稿，适合公开阅读和分享
 - `README.md`：GitHub 仓库首页说明
 - `agents/openai.yaml`：技能展示元数据
@@ -128,6 +128,64 @@ Use $tech-doc-style-chinese to rewrite this Chinese technical copy.
 ```
 
 或者直接在相关任务中触发，例如：
+
+- 重写中文技术文案
+- 整理 FAQ
+- 优化 API 文档措辞
+- 优化落地页中文文案
+
+## 如何在 Claude Code 中使用
+
+### 直接让 Claude Code 安装（最简单）
+
+在 Claude Code 对话框里直接发一句话即可，无须记安装命令：
+
+```text
+请安装这个 skill：https://github.com/Fenng/tech-doc-style-chinese
+```
+
+Claude Code 会自动读取仓库里的安装说明并完成安装。这种方式最省事，但具体装到项目级还是全局、是否附带 `references/Project-Overrides.md`，取决于 Claude Code 当时的判断，结果不如下面的显式命令固定。团队协作或需要写进文档、CI 的场景，建议用下面的 npx 命令。
+
+### 使用 npx 安装（推荐）
+
+如果本机有 Node.js 环境，可直接用 `npx skills` 安装：
+
+```bash
+# 安装到当前项目
+npx skills add https://github.com/Fenng/tech-doc-style-chinese -a claude-code
+```
+
+如需无交互并明确安装到全局 Claude Code，可使用：
+
+```bash
+npx -y skills add https://github.com/Fenng/tech-doc-style-chinese -a claude-code -g
+```
+
+参数说明：
+
+- `-a claude-code` 表示安装到 Claude Code
+- `-g` 表示全局安装（用户级，写入 `~/.claude/skills/`），不加则安装到当前项目范围（写入 `./.claude/skills/`）
+- `-y` 表示跳过交互确认，便于自动化执行
+
+安装后建议重启 Claude Code，以确保新 Skill 被加载。
+
+### 本地目录安装（开发场景）
+
+如果正在本地修改或调试，可直接复制目录：
+
+```bash
+mkdir -p ~/.claude/skills/tech-doc-style-chinese
+cp SKILL.md ~/.claude/skills/tech-doc-style-chinese/
+cp -R references ~/.claude/skills/tech-doc-style-chinese/
+```
+
+安装后可快速校验：
+
+```bash
+test -f ~/.claude/skills/tech-doc-style-chinese/SKILL.md && echo "installed"
+```
+
+Claude Code 会根据 `SKILL.md` 里的 `description` 自动判断何时调用该 Skill，无须手动触发，例如：
 
 - 重写中文技术文案
 - 整理 FAQ
