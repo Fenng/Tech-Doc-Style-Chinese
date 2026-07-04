@@ -91,26 +91,6 @@ npx -y skills add https://github.com/Fenng/tech-doc-style-chinese -a codex -g
 
 安装后建议重启 Codex，以确保新 Skill 被加载。
 
-### Claude Code 安装（可选）
-
-Claude Code 也支持 `SKILL.md` 形式的 Skills。可将本仓库安装到用户级技能目录：
-
-```bash
-mkdir -p ~/.claude/skills
-
-git clone --depth 1 \
-  https://github.com/Fenng/tech-doc-style-chinese.git \
-  ~/.claude/skills/tech-doc-style-chinese
-```
-
-安装后可在 Claude Code 中使用：
-
-```text
-/tech-doc-style-chinese
-```
-
-也可以在中文技术文档、产品文案或界面文案任务中让 Claude Code 自动加载该 Skill。
-
 ### 按 Release 安装（推荐）
 
 固定版本安装，便于团队复现：
@@ -158,13 +138,13 @@ Use $tech-doc-style-chinese to rewrite this Chinese technical copy.
 
 ### 直接让 Claude Code 安装（最简单）
 
-在 Claude Code 对话框里直接发一句话即可，无须记安装命令：
+如果当前 Claude Code 环境支持安装 Skills，可让它读取本仓库并安装：
 
 ```text
 请安装这个 skill：https://github.com/Fenng/tech-doc-style-chinese
 ```
 
-Claude Code 会自动读取仓库里的安装说明并完成安装。这种方式最省事，但具体装到项目级还是全局、是否附带 `references/Project-Overrides.md`，取决于 Claude Code 当时的判断，结果不如下面的显式命令固定。团队协作或需要写进文档、CI 的场景，建议用下面的 npx 命令。
+这种方式较省事，但具体装到项目级还是全局、是否附带 `references/Project-Overrides.md`，取决于 Claude Code 当时的能力与判断。团队协作或需要写进文档、CI 的场景，建议用下面的 npx 命令。
 
 ### 使用 npx 安装（推荐）
 
