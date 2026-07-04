@@ -141,7 +141,7 @@ Use $tech-doc-style-chinese to rewrite this Chinese technical copy.
 如果当前 Claude Code 环境支持安装 Skills，可让它读取本仓库并安装：
 
 ```text
-请安装这个 skill：https://github.com/Fenng/tech-doc-style-chinese
+请安装这份 Skill：https://github.com/Fenng/tech-doc-style-chinese
 ```
 
 这种方式较省事，但具体装到项目级还是全局、是否附带 `references/Project-Overrides.md`，取决于 Claude Code 当时的能力与判断。团队协作或需要写进文档、CI 的场景，建议用下面的 npx 命令。
