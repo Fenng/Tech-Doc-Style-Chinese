@@ -91,6 +91,26 @@ npx -y skills add https://github.com/Fenng/tech-doc-style-chinese -a codex -g
 
 安装后建议重启 Codex，以确保新 Skill 被加载。
 
+### Claude Code 安装（可选）
+
+Claude Code 也支持 `SKILL.md` 形式的 Skills。可将本仓库安装到用户级技能目录：
+
+```bash
+mkdir -p ~/.claude/skills
+
+git clone --depth 1 \
+  https://github.com/Fenng/tech-doc-style-chinese.git \
+  ~/.claude/skills/tech-doc-style-chinese
+```
+
+安装后可在 Claude Code 中使用：
+
+```text
+/tech-doc-style-chinese
+```
+
+也可以在中文技术文档、产品文案或界面文案任务中让 Claude Code 自动加载该 Skill。
+
 ### 按 Release 安装（推荐）
 
 固定版本安装，便于团队复现：
