@@ -333,7 +333,7 @@ def scan_structure(text: str) -> Scan:
                 close
                 and close.group(1)[0] == fence.char
                 and len(close.group(1)) >= fence.length
-                and fence.indent <= indent <= fence.indent + CONTINUATION_SLACK
+                and fence.floor <= indent <= fence.floor + CONTINUATION_SLACK
             ):
                 fence = None
             index += 1
@@ -502,11 +502,52 @@ class _Block:
         return f"{self.prefix}{self.text}{suffix}"
 
 
+def multiline_code_lines(scan: Scan) -> set[int]:
+    """Protect complete lines containing a code span across paragraph lines."""
+    protected: set[int] = set()
+    group: list[ScanLine] = []
+
+    def finish() -> None:
+        text = "\n".join(item.raw for item in group)
+        runs = list(re.finditer(r"`+", text))
+        index = 0
+        while index < len(runs):
+            opening = runs[index]
+            # Backslash escapes apply outside code spans only.
+            before = text[:opening.start()]
+            if (len(before) - len(before.rstrip("\\"))) % 2:
+                index += 1
+                continue
+            closing_index = next(
+                (j for j in range(index + 1, len(runs))
+                 if len(runs[j].group()) == len(opening.group())), None
+            )
+            if closing_index is None:
+                index += 1
+                continue
+            closing = runs[closing_index]
+            start = text.count("\n", 0, opening.start())
+            end = text.count("\n", 0, closing.end())
+            if end > start:
+                protected.update(item.line for item in group[start:end + 1])
+            index = closing_index + 1
+        group.clear()
+
+    for item in scan.lines:
+        if item.kind != KIND_TEXT:
+            finish()
+        if item.kind in {KIND_TEXT, KIND_LIST_ITEM}:
+            group.append(item)
+    finish()
+    return protected
+
+
 def join_scanned(scan: Scan) -> tuple[list[str], list[tuple[int, int, str]]]:
     """按扫描结论拼接段落，只处理正文行，不再判断结构。"""
     output: list[str] = []
     joins: list[tuple[int, int, str]] = []
     block: _Block | None = None
+    protected = multiline_code_lines(scan)
 
     def close(current: _Block, suffix: str = "") -> None:
         rendered = current.render(suffix)
@@ -521,7 +562,7 @@ def join_scanned(scan: Scan) -> tuple[list[str], list[tuple[int, int, str]]]:
             block = None
 
     for item in scan.lines:
-        if item.kind in {KIND_VERBATIM, KIND_BLANK}:
+        if item.kind in {KIND_VERBATIM, KIND_BLANK} or item.line in protected:
             flush()
             output.append(item.raw)
             continue

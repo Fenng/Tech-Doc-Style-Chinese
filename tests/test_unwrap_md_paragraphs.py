@@ -47,6 +47,40 @@ class JoinSpacingTest(unittest.TestCase):
 
 
 class UnwrapParagraphTest(unittest.TestCase):
+    def test_preserves_multiline_code_spans(self):
+        for span in (
+            "说明 `中文\n内容`。\n",
+            "说明 ``中文 `\n内容``。\n",
+            "- 说明 `中文\n  内容`。\n",
+            "说明 `中文  \n内容`。\n",
+        ):
+            with self.subTest(span=span):
+                text = span + "\n正文第一行\n正文第二行\n"
+                result, joins = unwrap_text(text)
+                self.assertEqual(result, span + "\n正文第一行正文第二行\n")
+                self.assertEqual(len(joins), 1)
+                self.assertEqual(unwrap_text(span), (span, []))
+
+    def test_unmatched_or_escaped_backticks_do_not_hide_paragraph(self):
+        for text in ("说明 `未闭合\n正文。\n", "说明 \\`中文\n内容`。\n"):
+            self.assertEqual(len(unwrap_text(text)[1]), 1)
+
+    def test_closing_fence_indent_is_relative_to_container(self):
+        for fence in ("```", "~~~"):
+            for opening_indent in range(4):
+                for closing_indent in range(4):
+                    code = " " * opening_indent + fence + "text\ncode\n" + " " * closing_indent + fence + "\n"
+                    self.assertEqual(
+                        self.unwrap(code + "\n正文一\n正文二\n"),
+                        code + "\n正文一正文二\n",
+                    )
+        code = "- 示例\n\n     ```text\n  code\n  ```\n"
+        self.assertEqual(self.unwrap(code + "\n正文一\n正文二\n"), code + "\n正文一正文二\n")
+
+    def test_overindented_fence_does_not_close(self):
+        text = "```text\n    ```\n正文一\n正文二\n"
+        self.assertEqual(self.unwrap(text), text)
+
     def unwrap(self, text: str) -> str:
         return unwrap_text(text)[0]
 
