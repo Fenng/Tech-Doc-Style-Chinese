@@ -37,6 +37,7 @@
 - 中文引号统一使用直角引号 `「」`
 - 默认避免不必要的直接称呼，允许项目语气覆盖
 - 在可见正文中处理中文与英文、数字之间的留白
+- 中文段落在源文件中保持一段一行，不做硬换行
 - 避免机械直译 `Success`、`Invalid`、`Bad Request` 等英文状态词
 - 避免高频互联网黑话，如 `赋能`、`抓手`、`闭环`、`打通`
 - 对操作、排查和运维文档应用受控中文技术写作方法
@@ -61,9 +62,12 @@ tech-doc-style-chinese/
 │   ├── project-overrides-example.md
 │   └── terminology-and-typography.md
 ├── scripts/
-│   └── lint_copy_rules.py
+│   ├── lint_copy_rules.py
+│   └── unwrap_md_paragraphs.py
 └── tests/
-    └── test_lint_copy_rules.py
+    ├── test_lint_copy_rules.py
+    ├── test_skill_structure.py
+    └── test_unwrap_md_paragraphs.py
 ```
 
 各文件的作用：
@@ -74,7 +78,8 @@ tech-doc-style-chinese/
 - `agents/openai.yaml`：技能展示元数据
 - `references/`：按任务读取的详细规则和项目覆盖模板
 - `scripts/lint_copy_rules.py`：轻量检查器
-- `tests/test_lint_copy_rules.py`：检查器回归测试
+- `scripts/unwrap_md_paragraphs.py`：展开段落硬换行的工具
+- `tests/`：检查器、技能结构和硬换行工具的回归测试
 
 ## 如何在 Codex 中使用
 
@@ -260,6 +265,42 @@ python -m unittest discover -s tests -v
 ```
 
 GitHub Actions 配置文件为 `.github/workflows/skill-lint.yml`，会在 `pull_request` 和 `main` 分支 `push` 时自动运行。
+
+## 展开段落硬换行
+
+为了控制源码行宽而在段落中间手动断行，会让源文件读起来很碎；中文与英文边界上的断行还会在部分渲染器里多出或吞掉空格。仓库提供一个零依赖脚本，把段落和列表项还原为「一段一行」，正文靠编辑器软换行阅读。
+
+检查是否存在硬换行，不改动文件：
+
+```bash
+python scripts/unwrap_md_paragraphs.py --check .
+```
+
+展开指定文件或目录，直接写回：
+
+```bash
+python scripts/unwrap_md_paragraphs.py docs/ README.md
+```
+
+只查看结果，不写回文件：
+
+```bash
+python scripts/unwrap_md_paragraphs.py --stdout docs/guide.md
+```
+
+拼接边界按中西文留白规则处理：中文与中文之间不加空格，中文与半角英文、数字之间加一个空格，全角标点两侧不加空格。
+
+脚本先扫描结构再拼接段落，因此以下内容按整块保留，不只保护起始行：front matter、围栏代码块（包括写在列表标记之后的 `- ```sh`）、缩进代码块（包括列表项内的缩进代码）、表格行、标题、分隔线、多行 HTML 块（`<pre>`、`<script>`、`<style>`、`<textarea>` 和注释）、链接引用定义、引用块，以及行尾两个空格或反斜杠表示的显式换行。
+
+需要整份文件跳过时，在代码块之外单独用一行写出标记：
+
+```markdown
+<!-- unwrap-disable-file -->
+```
+
+标记只在独立成行且不在代码块、HTML 块内时生效，因此上面这段代码示例不会让本文件免检。
+
+脚本只处理拼接边界，不修改段落内部已有的留白、标点和措辞。展开后仍需人工复查一遍边界留白和列表、表格结构。
 
 ## 发布建议
 
