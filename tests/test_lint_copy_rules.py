@@ -17,6 +17,27 @@ scan_markdown = LINTER["scan_markdown"]
 
 
 class CopyLintRulesTest(unittest.TestCase):
+    def test_multiline_inline_code_keeps_outside_diagnostics(self):
+        for code in ('`中文\n阀值`', '``中文 `\n阀值``'):
+            with self.subTest(code=code):
+                text = '说明 ' + code + '。阀值需要调整。'
+                findings = self.scan(text)
+                self.assertEqual(len(findings), 1)
+                self.assertEqual(findings[0].line, 2)
+                self.assertEqual(findings[0].col, text.splitlines()[1].rindex('阀值') + 1)
+
+    def test_unclosed_inline_code_does_not_hide_next_paragraph(self):
+        findings = self.scan('说明 `未闭合\n\n阀值`。')
+        self.assertEqual([(v.line, v.kind) for v in findings], [(3, 'typo')])
+
+    def test_indented_code_after_heading(self):
+        for heading in ('# 示例', '## 示例', '示例\n==='):
+            with self.subTest(heading=heading):
+                text = heading + '\n    阀值 = 1\n\n阀值需要调整。'
+                findings = self.scan(text)
+                self.assertEqual([(v.line, v.kind) for v in findings],
+                                 [(len(text.splitlines()), 'typo')])
+
     def scan(self, text: str):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "sample.md"

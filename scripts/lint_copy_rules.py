@@ -30,6 +30,37 @@ HTML_TAG_RE = re.compile(
 )
 AUTOLINK_RE = re.compile(r"<https?://[^<>\s]+>")
 INLINE_CODE_RE = re.compile(r"(`+)(.*?)\1")
+BLOCK_BOUNDARY_RE = re.compile(
+    r"(?m)^ *(?:$|#{1,6}(?:\s|$)|`{3,}|~{3,}|(?:[-*_] *){3,}$)"
+)
+
+
+def mask_code_spans(source: str) -> str:
+    """Mask exact backtick pairs without losing diagnostic coordinates."""
+    chars = list(source)
+    boundaries = [match.start() for match in BLOCK_BOUNDARY_RE.finditer(source)]
+    boundaries = sorted({0, len(source), *boundaries})
+    for start, end in zip(boundaries, boundaries[1:]):
+        runs = list(re.finditer(r"`+", source[start:end]))
+        index = 0
+        while index < len(runs):
+            opening = runs[index]
+            before = source[start:start + opening.start()]
+            if (len(before) - len(before.rstrip("\\"))) % 2:
+                index += 1
+                continue
+            closing_index = next((j for j in range(index + 1, len(runs))
+                                  if runs[j].group() == opening.group()), None)
+            if closing_index is None:
+                index += 1
+                continue
+            for pos in range(start + opening.start(), start + runs[closing_index].end()):
+                if chars[pos] not in "\r\n":
+                    chars[pos] = " "
+            index = closing_index + 1
+    return "".join(chars)
+
+
 URL_RE = re.compile(r'''https?://[^\s<>"'，。；：！？、（）「」『』【】]+''')
 API_PATH_RE = re.compile(
     r"(?<![A-Za-z0-9_])/[A-Za-z0-9._~%-]+"
@@ -199,7 +230,7 @@ def scan_markdown(path: Path) -> list[Violation]:
     source = HTML_TAG_RE.sub(
         lambda match: re.sub(r"[^\r\n]", " ", match.group()), source
     )
-    lines = source.splitlines()
+    lines = mask_code_spans(source).splitlines()
     in_front_matter = bool(lines and lines[0].strip() == "---")
     previous_depth = 0
     paragraph_open = False
@@ -295,7 +326,9 @@ def scan_markdown(path: Path) -> list[Violation]:
                 paragraph_open = False
                 continue
 
-        paragraph_open = True
+        paragraph_open = not bool(re.match(
+            r"^ {0,3}(?:#{1,6}(?:\s|$)|(?:[-*_] *){3,}$|=+\s*$)", content
+        ))
         if INLINE_IGNORE_MARKER in raw:
             continue
 

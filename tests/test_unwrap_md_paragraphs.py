@@ -47,6 +47,15 @@ class JoinSpacingTest(unittest.TestCase):
 
 
 class UnwrapParagraphTest(unittest.TestCase):
+    def test_preserves_entire_multiline_setext_heading(self):
+        for underline in ('---', '==='):
+            title = '标题第一行\n标题第二行\n' + underline + '\n'
+            text = title + '\n正文第一行\n正文第二行\n'
+            result, joins = unwrap_text(text)
+            self.assertEqual(result, title + '\n正文第一行正文第二行\n')
+            self.assertEqual(len(joins), 1)
+            self.assertEqual(unwrap_text(result)[0], result)
+
     def test_preserves_multiline_code_spans(self):
         for span in (
             "说明 `中文\n内容`。\n",

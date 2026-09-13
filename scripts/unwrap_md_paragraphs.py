@@ -451,6 +451,16 @@ def scan_structure(text: str) -> Scan:
             continue
 
         if is_structural(raw):
+            if SETEXT_UNDERLINE_RE.match(raw) and paragraph_open:
+                # The preceding paragraph belongs to this Setext heading.
+                # Preserve every title line, not only its underline.
+                previous = len(result) - 1
+                while previous >= 0 and result[previous].kind == KIND_TEXT:
+                    item = result[previous]
+                    result[previous] = ScanLine(
+                        item.line, item.raw, KIND_VERBATIM, item.indent
+                    )
+                    previous -= 1
             result.append(verbatim())
             paragraph_open = False
             index += 1
